@@ -5,26 +5,37 @@ require('dotenv').config();
 
 const app = express();
 
-// Middleware
-app.use(cors()); // Prevents "CORS Policy" errors in the browser
-app.use(express.json()); // Parses incoming JSON data
+// --- MIDDLEWARE ---
+app.use(cors()); // Allows your frontend to communicate with this backend
+app.use(express.json()); // Allows the server to process JSON data
 
-// MongoDB Connection 
-// Replace the URI in your Render Environment Variables, not here!
+// --- MONGODB CONNECTION ---
+// Make sure MONGODB_URI is set in Render's Environment Variables
 const mongoURI = process.env.MONGODB_URI;
 
 mongoose.connect(mongoURI)
     .then(() => console.log("✅ Successfully connected to MongoDB Atlas"))
     .catch((err) => console.error("❌ MongoDB connection error:", err));
 
-// Test Route
-app.get('/api/status', (req, res) => {
-    res.json({ message: "Backend is running!", status: "Connected" });
+// --- ROUTES ---
+
+// 1. Home Route (This fixes the "Cannot GET /" error)
+app.get('/', (req, res) => {
+    res.send('✅ Portfolio Backend is live and running!');
 });
 
-// Start Server
-// Render provides the PORT dynamically, so process.env.PORT is mandatory
+// 2. Health Check Route
+app.get('/api/status', (req, res) => {
+    res.json({ 
+        status: "Online", 
+        database: mongoose.connection.readyState === 1 ? "Connected" : "Disconnected" 
+    });
+});
+
+// --- START SERVER ---
+// Render dynamically assigns a PORT, so process.env.PORT is required
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => {
-    console.log(`🚀 Server listening on port ${PORT}`);
+
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 Server is listening on port ${PORT}`);
 });
