@@ -1,55 +1,46 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const cors = require('cors');
+const cors = require('cors'); // This is the key
 require('dotenv').config();
 
 const app = express();
 
-// --- MIDDLEWARE ---
-app.use(cors()); 
-app.use(express.json()); 
+// --- UPDATED CORS SETTINGS ---
+// This tells the backend to trust requests from your GitHub portfolio
+app.use(cors({
+    origin: 'https://abhinand9364.github.io', 
+    methods: ['GET', 'POST'],
+    credentials: true
+}));
 
-// --- MONGODB CONNECTION ---
-const mongoURI = process.env.MONGODB_URI;
+app.use(express.json());
 
-mongoose.connect(mongoURI)
-    .then(() => console.log("✅ Successfully connected to MongoDB Atlas"))
-    .catch((err) => console.error("❌ MongoDB connection error:", err));
+// MongoDB Connection
+mongoose.connect(process.env.MONGODB_URI)
+    .then(() => console.log("✅ MongoDB Connected"))
+    .catch(err => console.error("❌ Connection Error:", err));
 
-// --- DATA MODEL (The Schema) ---
-const InquirySchema = new mongoose.Schema({
-    name: { type: String, required: true },
-    email: { type: String, required: true },
-    message: { type: String, required: true },
+// Inquiry Schema & Model
+const Inquiry = mongoose.model('Inquiry', new mongoose.Schema({
+    name: String,
+    email: String,
+    message: String,
     date: { type: Date, default: Date.now }
-});
-const Inquiry = mongoose.model('Inquiry', InquirySchema);
-
-// --- ROUTES ---
+}));
 
 // Home Route
-app.get('/', (req, res) => {
-    res.send('✅ Portfolio Backend is live and running!');
-});
+app.get('/', (req, res) => res.send('✅ Backend is Live!'));
 
-// Inquiry Submission Route
+// POST Route for the form
 app.post('/api/contact', async (req, res) => {
     try {
-        const newInquiry = new Inquiry({
-            name: req.body.name,
-            email: req.body.email,
-            message: req.body.message
-        });
+        const newInquiry = new Inquiry(req.body);
         await newInquiry.save();
-        res.status(201).json({ success: true, message: "Inquiry saved successfully!" });
+        res.status(201).json({ success: true });
     } catch (err) {
-        console.error("Save error:", err);
-        res.status(500).json({ success: false, error: "Failed to save inquiry." });
+        res.status(500).json({ success: false });
     }
 });
 
-// --- START SERVER ---
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Server listening on port ${PORT}`);
-});
+app.listen(PORT, '0.0.0.0', () => console.log(`Server on ${PORT}`));
