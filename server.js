@@ -1,12 +1,12 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const cors = require('cors'); // This is the key
+const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
 
-// --- UPDATED CORS SETTINGS ---
-// This tells the backend to trust requests from your GitHub portfolio
+// --- CORS TWEAK ---
+// Allows your GitHub Pages site to securely send data
 app.use(cors({
     origin: 'https://abhinand9364.github.io', 
     methods: ['GET', 'POST'],
@@ -16,31 +16,34 @@ app.use(cors({
 app.use(express.json());
 
 // MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI)
-    .then(() => console.log("✅ MongoDB Connected"))
-    .catch(err => console.error("❌ Connection Error:", err));
+const mongoURI = process.env.MONGODB_URI;
+mongoose.connect(mongoURI)
+    .then(() => console.log("✅ MongoDB Atlas Connected"))
+    .catch(err => console.error("❌ MongoDB Connection Error:", err));
 
-// Inquiry Schema & Model
+// Schema
 const Inquiry = mongoose.model('Inquiry', new mongoose.Schema({
-    name: String,
-    email: String,
-    message: String,
+    name: { type: String, required: true },
+    email: { type: String, required: true },
+    message: { type: String, required: true },
     date: { type: Date, default: Date.now }
 }));
 
-// Home Route
-app.get('/', (req, res) => res.send('✅ Backend is Live!'));
+// Routes
+app.get('/', (req, res) => res.send('✅ Portfolio Backend is live!'));
 
-// POST Route for the form
 app.post('/api/contact', async (req, res) => {
     try {
         const newInquiry = new Inquiry(req.body);
         await newInquiry.save();
         res.status(201).json({ success: true });
     } catch (err) {
-        res.status(500).json({ success: false });
+        console.error(err);
+        res.status(500).json({ success: false, error: err.message });
     }
 });
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, '0.0.0.0', () => console.log(`Server on ${PORT}`));
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+});
